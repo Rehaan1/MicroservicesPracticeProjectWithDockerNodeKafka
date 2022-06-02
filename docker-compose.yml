@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  base-service-app:
+    image: rehaanmazid009/base-service-app
+    container_name: base-service
+    ports:
+      - 3000:3000
+    networks:
+      - microservice-network
+  
+  order-service-app:
+    image: rehaanmazid009/order-service-app
+    container_name: order-service
+    ports:
+      - 4040:4040
+    networks:
+      - microservice-network
+
+  user-auth-service-app:
+    image: rehaanmazid009/user-auth-service-app
+    container_name: user-auth-service
+    ports:
+      - 3030:3030
+    networks:
+      - microservice-network
+    
+networks:
+  microservice-network:
