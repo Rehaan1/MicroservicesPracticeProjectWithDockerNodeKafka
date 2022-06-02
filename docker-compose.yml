@@ -24,6 +24,19 @@ services:
       - 3030:3030
     networks:
       - microservice-network
+
+  mongo:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    networks:
+      - microservice-network
+    volumes:
+      - mongodb:/data/db
     
 networks:
   microservice-network:
+
+volumes:
+  mongodb:

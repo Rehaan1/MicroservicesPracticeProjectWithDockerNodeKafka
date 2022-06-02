@@ -1,9 +1,12 @@
 const router = require('express').Router()
 const axios = require('axios').default
 
-router.get('/login', (req,res) => {
+router.post('/login', (req,res) => {
     
-    axios.get('http://user-auth-service-app:3030/login')
+    axios.post('http://user-auth-service-app:3030/login', {
+        email: req.body.email,
+        password: req.body.password
+        })
         .then((response) => {
             
             return res.status(200).json({
@@ -20,9 +23,12 @@ router.get('/login', (req,res) => {
 
 })
 
-router.get('/signup', (req,res) => {
+router.post('/signup', (req,res) => {
 
-    axios.get('http://user-auth-service-app:3030/signUp')
+    axios.post('http://user-auth-service-app:3030/signUp', {
+        email: req.body.email,
+        password: req.body.password
+        })
         .then((response) => {
             
             return res.status(200).json({
