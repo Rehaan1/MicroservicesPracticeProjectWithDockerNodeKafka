@@ -6,6 +6,7 @@ const redis = require('redis')
 const addToCartRoute = require('./api/routes/addToCartRoute')
 const getCartRoute = require('./api/routes/getCartRoute')
 const placeOrderRoute = require('./api/routes/placeOrderRoute')
+const mongoose = require('mongoose')
 
 const app = express()
 
@@ -13,6 +14,15 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
 app.use(cors())
+
+mongoose.connect('mongodb://mongo:27017/project-db',
+                {useNewUrlParser: true})
+            .then(() => {
+                console.log('MongoDB Connected')
+            })
+            .catch((err) => {
+                console.log(err)
+            })
 
 const client = redis.createClient({
     url: 'redis://@redis:6379'

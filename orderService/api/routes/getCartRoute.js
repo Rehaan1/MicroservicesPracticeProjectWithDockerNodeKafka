@@ -12,7 +12,7 @@ client.on('error', (err) => {
 
 client.connect()
     .then(()=>{
-        console.log("Redis Connected in Add To Cart")
+        console.log("Redis Connected in Get Cart")
     })
     .catch((err) => {
         console.log(err)
