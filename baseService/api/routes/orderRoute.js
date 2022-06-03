@@ -1,9 +1,16 @@
 const router = require('express').Router()
 const axios = require('axios').default
 
-router.get('/addToCart', (req,res) => {
+router.post('/addToCart', (req,res) => {
 
-    axios.get('http://order-service-app:4040/addToCart')
+    axios.post('http://order-service-app:4040/addToCart', {
+        item: req.body.item,
+        quantity: req.body.quantity
+        }, {
+            headers: {
+                'auth-token': req.header('auth-token')
+            }
+        })
         .then((response) => {
             
             return res.status(200).json({
@@ -22,7 +29,11 @@ router.get('/addToCart', (req,res) => {
 
 router.get('/getCart', (req,res) => {
     
-    axios.get('http://order-service-app:4040/getCart')
+    axios.get('http://order-service-app:4040/getCart',{
+        headers: {
+            'auth-token': req.header('auth-token')
+        }
+    })
         .then((response) => {
             
             return res.status(200).json({
@@ -41,7 +52,11 @@ router.get('/getCart', (req,res) => {
 
 router.get('/placeOrder', (req,res) => {
     
-    axios.get('http://order-service-app:4040/placeOrder')
+    axios.get('http://order-service-app:4040/placeOrder', {
+        headers: {
+            'auth-token': req.header('auth-token')
+        }
+    })
     .then((response) => {
         
         return res.status(200).json({
