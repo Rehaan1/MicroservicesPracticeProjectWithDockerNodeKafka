@@ -2,6 +2,7 @@ require('dotenv').config()
 
 const express = require('express')
 const cors = require('cors')
+const redis = require('redis')
 const addToCartRoute = require('./api/routes/addToCartRoute')
 const getCartRoute = require('./api/routes/getCartRoute')
 const placeOrderRoute = require('./api/routes/placeOrderRoute')
@@ -13,15 +14,46 @@ app.use(express.json())
 
 app.use(cors())
 
+const client = redis.createClient({
+    url: 'redis://@redis:6379'
+})
+
+client.on('error', (err) => {
+    console.log('Redis Client Error',err)
+})
+
+client.connect()
+    .then(()=>{
+        console.log("Redis Connected")
+    })
+    .catch((err) => {
+        console.log(err)
+    })
+
 app.use('/addToCart',addToCartRoute)
 app.use('/getCart',getCartRoute)
 app.use('/placeOrder',placeOrderRoute)
 
 
 app.get('/', (req,res) => {
-    return res.status(200).json({
-        message:" API UP AND RUNNING"
-    })
+
+    // client.set('hello','testing redis world')
+
+    client.get('hello')
+        .then((value) => {
+            return res.status(200).json({
+                status: 200,
+                message:" API UP AND RUNNING",
+                redisValue : value
+            })
+        })
+        .catch((err) => {
+            return res.status(200).json({
+                status: 500,
+                message:" Redis Fetching Error",
+                error : err
+            })
+        })    
 })
 
 app.listen(process.env.PORT, () => {

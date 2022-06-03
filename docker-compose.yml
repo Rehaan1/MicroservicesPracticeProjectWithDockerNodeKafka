@@ -34,9 +34,20 @@ services:
       - microservice-network
     volumes:
       - mongodb:/data/db
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - 6379:6379
+    networks:
+      - microservice-network
+    volumes:
+      - redis:/data
     
 networks:
   microservice-network:
 
 volumes:
   mongodb:
+  redis:
