@@ -64,9 +64,8 @@ router.get('/', verify, (req,res) => {
 
         const payloads = [
             {
-              userId: req.user._id,
               topic: process.env.TOPIC,
-              order: value,
+              messages: [JSON.stringify(value)+' '],
             },
           ]
       
