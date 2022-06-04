@@ -2,20 +2,32 @@ version: '3.7'
 
 services:
   base-service-app:
-    image: rehaanmazid009/base-service-app
+    image: rehaanmazid009/base-service-app:latest
     container_name: base-service
+    environment:
+      TOPIC: example-topic
+      ENVIRONMENT: local
+      INTERNAL_KAFKA_ADDR: 'kafka:9092'
     ports:
       - 3000:3000
     networks:
       - microservice-network
+    depends_on:
+      - kafka
   
   order-service-app:
     image: rehaanmazid009/order-service-app
     container_name: order-service
+    environment:
+      TOPIC: example-topic
+      ENVIRONMENT: local
+      INTERNAL_KAFKA_ADDR: 'kafka:9092'
     ports:
       - 4040:4040
     networks:
       - microservice-network
+    depends_on:
+      - base-service-app
 
   user-auth-service-app:
     image: rehaanmazid009/user-auth-service-app
@@ -44,6 +56,38 @@ services:
       - microservice-network
     volumes:
       - redis:/data
+
+  zookeeper:
+    ports:
+      - '50000:2181'
+    image: jplock/zookeeper
+    networks:
+      - microservice-network
+    volumes:
+      - zookeeper:/opt/zookeeper-3.8/data
+  
+  kafka:
+    ports:
+      - '50001:9092'
+      - '50002:9093'
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENERS: 'INTERNAL://:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1'
+      KAFKA_CREATE_TOPICS: 'example-topic:1:1'
+      KAFKA_ADVERTISED_HOST_NAME: host.docker.internal # change to 172.17.0.1 if running on Ubuntu
+    image: 'wurstmeister/kafka:2.12-2.4.0'
+    networks:
+      - microservice-network
+    volumes:
+      - kafka:/kafka
+    
+    
     
 networks:
   microservice-network:
@@ -51,3 +95,5 @@ networks:
 volumes:
   mongodb:
   redis:
+  kafka:
+  zookeeper:

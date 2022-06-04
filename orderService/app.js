@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const redis = require('redis')
+const kafka = require('kafka-node');
 const addToCartRoute = require('./api/routes/addToCartRoute')
 const getCartRoute = require('./api/routes/getCartRoute')
 const placeOrderRoute = require('./api/routes/placeOrderRoute')
@@ -39,6 +40,51 @@ client.connect()
     .catch((err) => {
         console.log(err)
     })
+
+const kafClient = new kafka.KafkaClient({
+    kafkaHost:
+      process.env.ENVIRONMENT === 'local'
+        ? process.env.INTERNAL_KAFKA_ADDR
+        : process.env.EXTERNAL_KAFKA_ADDR,
+  });
+
+const Admin = kafka.Admin;
+const Consumer = kafka.Consumer;
+
+const admin = new Admin(kafClient);
+
+const interval_id = setInterval(() => {
+    admin.listTopics((err, res) => {
+      if (res[1].metadata[process.env.TOPIC]) {
+        console.log('Kafka topic created')
+        clearInterval(interval_id)
+
+        const consumer = new Consumer(
+            kafClient,
+            [
+              {
+                topic: process.env.TOPIC,
+                partition: 0,
+              },
+            ],
+            {
+              autoCommit: false,
+            },
+          )
+        
+        consumer.on('message', message => {
+          console.log(message);
+        })
+        
+        consumer.on('error', err => {
+          console.log(err);
+        })
+        
+      } else {
+        console.log('Waiting for Kafka topic to be created');
+      }
+    });
+  }, 1000);
 
 app.use('/addToCart',addToCartRoute)
 app.use('/getCart',getCartRoute)
