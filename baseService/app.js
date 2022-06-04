@@ -14,7 +14,7 @@ app.use(express.json())
 
 app.use(cors())
 
-console.log('Connecting to New Kafka....')
+console.log('Connecting to Kafka in Base Service....')
 
 const client = new kafka.KafkaClient({
     kafkaHost:
@@ -23,16 +23,46 @@ const client = new kafka.KafkaClient({
         : process.env.EXTERNAL_KAFKA_ADDR,
   });
 
-const Producer = kafka.Producer;
-const producer = new Producer(client);
+const Admin = kafka.Admin;
+const Consumer = kafka.Consumer;
 
-producer.on('ready', () => {
-    console.log("KAFKA PRODUCER READY..........")
-})
+const admin = new Admin(client);
 
-producer.on('error', (err) => {
-    console.log('KAFKA ERROR', err)
-})
+const interval_id = setInterval(() => {
+
+  admin.listTopics((err, res) => {
+
+    if (res[1].metadata[process.env.TOPIC]) {
+
+      console.log('Kafka topic created')
+      clearInterval(interval_id)
+
+      const consumer = new Consumer(
+          client,
+          [
+            {
+              topic: process.env.TOPIC,
+              partition: 0,
+            },
+          ],
+          {
+            autoCommit: false,
+          },
+        )
+      
+      consumer.on('message', message => {
+        console.log('Order Placed:',message);
+      })
+      
+      consumer.on('error', err => {
+        console.log(err);
+      })
+
+    } else {
+      console.log('Waiting for Kafka topic to be created');
+    }
+  });
+}, 1000);
 
 app.use('/user',userAuthRoute)
 app.use('/order',orderRoute)
@@ -42,23 +72,6 @@ app.get('/', (req,res) => {
     return res.status(200).json({
         message:" API UP AND RUNNING"
     })
-})
-
-app.get('/writeToTopic',(req,res) =>{
-
-    const payloads = [
-        {
-          topic: process.env.TOPIC,
-          messages: 'testing kafka success',
-        },
-      ]
-  
-      producer.send(payloads, (err, data) => {
-        if (err) {
-          console.log(err);
-        }
-        console.log(data);
-      })
 })
 
 app.listen(process.env.PORT, () => {

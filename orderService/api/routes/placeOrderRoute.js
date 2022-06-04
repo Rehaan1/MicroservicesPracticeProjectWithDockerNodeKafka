@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const redis = require('redis')
+const kafka = require('kafka-node');
 const verify = require('../middleware/verifyToken')
 const Order = require('../../models/orderModel')
 
@@ -19,7 +20,25 @@ client.connect()
         console.log(err)
     })
 
+console.log('Connecting to Kafka in Order Service....')
 
+const kafClient = new kafka.KafkaClient({
+    kafkaHost:
+      process.env.ENVIRONMENT === 'local'
+        ? process.env.INTERNAL_KAFKA_ADDR
+        : process.env.EXTERNAL_KAFKA_ADDR,
+  });
+
+const Producer = kafka.Producer;
+const producer = new Producer(kafClient);
+
+producer.on('ready', () => {
+    console.log("KAFKA PRODUCER READY..........")
+})
+
+producer.on('error', (err) => {
+    console.log('KAFKA ERROR', err)
+})
 
 router.get('/', verify, (req,res) => {
 
@@ -43,6 +62,20 @@ router.get('/', verify, (req,res) => {
             orderItems: value
         })
 
+        const payloads = [
+            {
+              userId: req.user._id,
+              topic: process.env.TOPIC,
+              order: value,
+            },
+          ]
+      
+        producer.send(payloads, (err, data) => {
+            if (err) {
+              console.log(err);
+            }
+            console.log(data);
+          })
 
         order.save()
             .then((order) => {
